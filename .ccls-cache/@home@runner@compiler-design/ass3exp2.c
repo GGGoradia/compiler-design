@@ -1,250 +1,104 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-#define MAX 10
-#define STACK_SIZE 100
+#define MAX_SYMBOLS 100
+#define MAX_RULES 100
+#define MAX_STRING 1000
 
-char grammar[MAX][MAX][MAX];  // Grammar rules
-char first[MAX][MAX], follow[MAX][MAX], terminals[MAX], nonTerminals[MAX];
-char parseTable[MAX][MAX];  // Parse table
-int numProductions, numTerminals = 0, numNonTerminals = 0;
+char terminals[MAX_SYMBOLS][10];
+char non_terminals[MAX_SYMBOLS][10];
+char productions[MAX_RULES][20];
+int num_terminals, num_non_terminals, num_rules;
+char input[MAX_STRING];
+int input_index = 0;
 
-char stack[STACK_SIZE];  // Stack for parsing
-int top = -1;
+int parse_E();
+int parse_T();
+int parse_F();
 
-void push(char c) {
-    if (top < STACK_SIZE - 1) {
-        stack[++top] = c;
+int match(char expected) {
+    if (input[input_index] == expected) {
+        printf("Matched %c\n", expected);
+        input_index++;
+        return 1;
     }
+    return 0;
 }
 
-char pop() {
-    if (top >= 0) {
-        return stack[top--];
-    }
-    return '\0';  // Empty stack case
-}
-
-// Function to add a symbol to a set without duplication
-void addToSet(char set[], char symbol) {
-    if (!strchr(set, symbol)) {
-        int len = strlen(set);
-        set[len] = symbol;
-        set[len + 1] = '\0';
-    }
-}
-
-// Function to find FIRST of a non-terminal
-void findFirst(char nonTerminal, char result[]) {
-    for (int i = 0; i < numProductions; i++) {
-        if (grammar[i][0][0] == nonTerminal) {
-            if (islower(grammar[i][1][0]) || grammar[i][1][0] == 'e') {
-                addToSet(result, grammar[i][1][0]);  // Terminal or epsilon
-            } else {
-                findFirst(grammar[i][1][0], result);  // Recursive call for non-terminal
+int parse_E() {
+    printf("Parsing E\n");
+    if (parse_T()) {
+        while (input[input_index] == '+') {
+            if (match('+') && parse_T()) {
+                continue;
             }
+            break;
         }
+        return 1;
     }
+    return 0;
 }
 
-// Function to find FOLLOW of a non-terminal
-void findFollow(char nonTerminal, char result[]) {
-    if (nonTerminal == grammar[0][0][0]) {
-        addToSet(result, '$');  // Add $ to FOLLOW of start symbol
-    }
-
-    for (int i = 0; i < numProductions; i++) {
-        for (int j = 0; j < strlen(grammar[i][1]); j++) {
-            if (grammar[i][1][j] == nonTerminal) {
-                if (grammar[i][1][j + 1] != '\0') {
-                    if (islower(grammar[i][1][j + 1])) {
-                        addToSet(result, grammar[i][1][j + 1]);
-                    } else {
-                        findFirst(grammar[i][1][j + 1], result);
-                    }
-                }
-                if (grammar[i][1][j + 1] == '\0' || strchr(first[grammar[i][1][j + 1] - 'A'], 'e')) {
-                    if (grammar[i][0][0] != nonTerminal) {
-                        findFollow(grammar[i][0][0], result);
-                    }
-                }
+int parse_T() {
+    printf("Parsing T\n");
+    if (parse_F()) {
+        while (input[input_index] == '*') {
+            if (match('*') && parse_F()) {
+                continue;
             }
+            break;
         }
+        return 1;
     }
+    return 0;
 }
 
-// Function to construct the parse table
-void constructParseTable() {
-    for (int i = 0; i < numNonTerminals; i++) {
-        for (int j = 0; j < numTerminals; j++) {
-            parseTable[i][j] = '-';  // Initialize with empty '-'
+int parse_F() {
+    printf("Parsing F\n");
+    if (input[input_index] == '(') {
+        if (match('(') && parse_E() && match(')')) {
+            return 1;
+        }
+    } else if (input[input_index] == 'i' && input[input_index + 1] == 'd') {
+        if (match('i') && match('d')) {
+            return 1;
         }
     }
-
-    for (int i = 0; i < numProductions; i++) {
-        char firstSet[MAX] = "";
-        findFirst(grammar[i][0][0], firstSet);
-
-        for (int j = 0; j < strlen(firstSet); j++) {
-            if (firstSet[j] != 'e') {
-                for (int k = 0; k < numTerminals; k++) {
-                    if (terminals[k] == firstSet[j]) {
-                        parseTable[grammar[i][0][0] - 'A'][k] = i + '1';
-                    }
-                }
-            } else {
-                char followSet[MAX] = "";
-                findFollow(grammar[i][0][0], followSet);
-                for (int k = 0; k < strlen(followSet); k++) {
-                    for (int l = 0; l < numTerminals; l++) {
-                        if (terminals[l] == followSet[k]) {
-                            parseTable[grammar[i][0][0] - 'A'][l] = i + '1';
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Function to display the FIRST and FOLLOW sets
-void displayFirstFollow() {
-    printf("FIRST Sets:\n");
-    for (int i = 0; i < numNonTerminals; i++) {
-        printf("FIRST(%c) = { %s }\n", nonTerminals[i], first[i]);
-    }
-
-    printf("\nFOLLOW Sets:\n");
-    for (int i = 0; i < numNonTerminals; i++) {
-        printf("FOLLOW(%c) = { %s }\n", nonTerminals[i], follow[i]);
-    }
-}
-
-// Function to display the Parse Table
-void displayParseTable() {
-    printf("\nPredictive Parse Table:\n");
-    printf("    ");
-    for (int i = 0; i < numTerminals; i++) {
-        printf(" %c  |", terminals[i]);
-    }
-    printf("\n-------------------------\n");
-
-    for (int i = 0; i < numNonTerminals; i++) {
-        printf(" %c |", nonTerminals[i]);
-        for (int j = 0; j < numTerminals; j++) {
-            if (parseTable[i][j] != '-') {
-                printf(" %c  |", parseTable[i][j]);
-            } else {
-                printf(" -  |");
-            }
-        }
-        printf("\n");
-    }
-}
-
-// Predictive parsing algorithm
-void predictiveParsing(char *input) {
-    push('$');
-    push(grammar[0][0][0]);  // Start symbol
-
-    int i = 0;
-    char currentInput = input[i];
-
-    printf("\nParsing process:\n");
-    while (stack[top] != '$') {
-        char topSymbol = pop();
-
-        if (topSymbol == currentInput) {
-            printf("Matched: %c\n", currentInput);
-            i++;
-            currentInput = input[i];
-        } else if (topSymbol >= 'A' && topSymbol <= 'Z') {
-            int row = topSymbol - 'A';
-            int col = -1;
-            for (int j = 0; j < numTerminals; j++) {
-                if (terminals[j] == currentInput) {
-                    col = j;
-                    break;
-                }
-            }
-
-            if (col != -1 && parseTable[row][col] != '-') {
-                int ruleIndex = parseTable[row][col] - '1';
-                printf("Applying rule: %s -> %s\n", grammar[ruleIndex][0], grammar[ruleIndex][1]);
-
-                if (strcmp(grammar[ruleIndex][1], "e") != 0) {
-                    for (int j = strlen(grammar[ruleIndex][1]) - 1; j >= 0; j--) {
-                        push(grammar[ruleIndex][1][j]);
-                    }
-                }
-            } else {
-                printf("Error: No rule for %c on input %c\n", topSymbol, currentInput);
-                return;
-            }
-        } else {
-            printf("Error: Unexpected symbol %c\n", topSymbol);
-            return;
-        }
-    }
-
-    if (input[i] == '$') {
-        printf("Input string is successfully parsed.\n");
-    } else {
-        printf("Error: Input string not fully parsed.\n");
-    }
-}
-
-void inputGrammar() {
-    printf("Enter the number of production rules: ");
-    scanf("%d", &numProductions);
-    getchar();  // Consume the newline character
-
-    for (int i = 0; i < numProductions; i++) {
-        printf("Enter production rule %d (format: A->BC or A->a): ", i + 1);
-        char lhs[2], rhs[MAX];
-        scanf("%s -> %s", lhs, rhs);
-
-        strcpy(grammar[i][0], lhs);
-        strcpy(grammar[i][1], rhs);
-
-        // Add non-terminals
-        if (!strchr(nonTerminals, lhs[0])) {
-            nonTerminals[numNonTerminals++] = lhs[0];
-        }
-
-        // Add terminals
-        for (int j = 0; j < strlen(rhs); j++) {
-            if (islower(rhs[j]) && !strchr(terminals, rhs[j])) {
-                terminals[numTerminals++] = rhs[j];
-            }
-        }
-    }
-    terminals[numTerminals++] = '$';  // End marker
+    return 0;
 }
 
 int main() {
-    inputGrammar();
-
-    for (int i = 0; i < numNonTerminals; i++) {
-        findFirst(nonTerminals[i], first[i]);
+    printf("Enter the number of terminals: ");
+    scanf("%d", &num_terminals);
+    printf("Enter the terminals:\n");
+    for (int i = 0; i < num_terminals; i++) {
+        scanf("%s", terminals[i]);
     }
 
-    for (int i = 0; i < numNonTerminals; i++) {
-        findFollow(nonTerminals[i], follow[i]);
+    printf("Enter the number of non-terminals: ");
+    scanf("%d", &num_non_terminals);
+    printf("Enter the non-terminals:\n");
+    for (int i = 0; i < num_non_terminals; i++) {
+        scanf("%s", non_terminals[i]);
     }
 
-    displayFirstFollow();
+    printf("Enter the number of production rules: ");
+    scanf("%d", &num_rules);
+    printf("Enter the production rules (format: A->abc):\n");
+    for (int i = 0; i < num_rules; i++) {
+        scanf("%s", productions[i]);
+    }
 
-    constructParseTable();
-
-    displayParseTable();
-
-    char input[MAX];
-    printf("\nEnter input string to parse (append $ at the end): ");
+    printf("Enter the string to parse: ");
     scanf("%s", input);
 
-    predictiveParsing(input);
+    if (parse_E() && input[input_index] == '\0') {
+        printf("String is valid!\n");
+    } else {
+        printf("String is invalid!\n");
+    }
 
     return 0;
 }
