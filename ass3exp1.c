@@ -1,142 +1,113 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
-#define NUM_TERMINALS 6
-#define MAX_NON_TERMINALS 10
+char prol[7][10] = { "S", "A", "A", "B", "B", "C", "C" };
+char pror[7][10] = { "A", "Bb", "Cd", "aB", "@", "Cc", "@" };
+char prod[7][10] = { "S->A", "A->Bb", "A->Cd", "B->aB", "B->@", "C->Cc", "C->@" };
+char first[7][10] = { "abcd", "ab", "cd", "a@", "@", "c@", "@" };
+char follow[7][10] = { "$", "$", "$", "a$", "b$", "c$", "d$" };
+char table[5][6][10];
 
-typedef struct {
-  char non_terminal[10];
-  char productions[MAX_NON_TERMINALS][20];
-} ParseTableEntry;
+int numr(char c)
+{
+   switch (c)
+   {
+      case 'S':
+         return 0;
 
-char terminals[NUM_TERMINALS][10] = {"(", "id", "+", "*", ")", "$"};
+      case 'A':
+         return 1;
 
-bool containsEpsilon(char *set) { return strchr(set, 'e') != NULL; }
+      case 'B':
+         return 2;
 
-void addToSet(char *set, char c) {
-  if (!strchr(set, c)) {
-    strncat(set, &c, 1);
-  }
+      case 'C':
+         return 3;
+
+      case 'a':
+         return 0;
+
+      case 'b':
+         return 1;
+
+      case 'c':
+         return 2;
+
+      case 'd':
+         return 3;
+
+      case '$':
+         return 4;
+   }
+
+   return (2);
 }
 
-void calculateFirstSet(int num_non_terminals, ParseTableEntry parseTable[],
-                       char firstSets[][20]) {
-  bool changed = true;
+int main()
+{
+   int i, j, k;
 
-  while (changed) {
-    changed = false;
+   for (i = 0; i < 5; i++)
+      for (j = 0; j < 6; j++)
+         strcpy(table[i][j], " ");
 
-    for (int i = 0; i < num_non_terminals; i++) {
-      for (int j = 0; j < MAX_NON_TERMINALS; j++) {
-        char *prod = parseTable[i].productions[j];
-        if (prod[0] >= 'a' && prod[0] <= 'z') { // Terminal
-          if (!strchr(firstSets[i], prod[0])) {
-            strncat(firstSets[i], prod, 1);
-            changed = true;
-          }
-        } else if (prod[0] >= 'A' && prod[0] <= 'Z') { // Non-terminal
-          int nt_index = prod[0] - 'A'; // Assuming A-Z map to 0-25
-          for (int k = 0; k < strlen(firstSets[nt_index]); k++) {
-            char first_char = firstSets[nt_index][k];
-            if (first_char != 'e' && !strchr(firstSets[i], first_char)) {
-              strncat(firstSets[i], &first_char, 1);
-              changed = true;
-            }
-          }
-          if (containsEpsilon(firstSets[nt_index])) {
-            addToSet(firstSets[i], 'e');
-          }
-        }
+   printf("The following grammar is used for Parsing Table:\n");
+
+   for (i = 0; i < 7; i++)
+      printf("%s\n", prod[i]);
+
+   printf("\nPredictive parsing table:\n");
+
+   fflush(stdin);
+
+   for (i = 0; i < 7; i++)
+   {
+      k = strlen(first[i]);
+      for (j = 0; j < 10; j++)
+         if (first[i][j] != '@')
+            strcpy(table[numr(prol[i][0]) + 1][numr(first[i][j]) + 1], prod[i]);
+   }
+
+   for (i = 0; i < 7; i++)
+   {
+      if (strlen(pror[i]) == 1)
+      {
+         if (pror[i][0] == '@')
+         {
+            k = strlen(follow[i]);
+            for (j = 0; j < k; j++)
+               strcpy(table[numr(prol[i][0]) + 1][numr(follow[i][j]) + 1], prod[i]);
+         }
       }
-    }
-  }
-}
+   }
 
-void calculateFollowSet(int num_non_terminals, ParseTableEntry parseTable[],
-                        char firstSets[][20], char followSets[][20]) {
-  strcat(followSets[0], "$"); // FOLLOW of start symbol includes $
+   strcpy(table[0][0], " ");
 
-  bool changed = true;
+   strcpy(table[0][1], "a");
 
-  while (changed) {
-    changed = false;
+   strcpy(table[0][2], "b");
 
-    for (int i = 0; i < num_non_terminals; i++) {
-      for (int j = 0; j < MAX_NON_TERMINALS; j++) {
-        char *prod = parseTable[i].productions[j];
-        int len = strlen(prod);
+   strcpy(table[0][3], "c");
 
-        for (int k = 0; k < len; k++) {
-          if (prod[k] >= 'A' && prod[k] <= 'Z') { // Non-terminal
-            int nt_index = prod[k] - 'A';
+   strcpy(table[0][4], "d");
 
-            // If there is something after the non-terminal
-            if (k + 1 < len) {
-              if (prod[k + 1] >= 'a' && prod[k + 1] <= 'z') { // Terminal
-                addToSet(followSets[nt_index], prod[k + 1]);
-              } else if (prod[k + 1] >= 'A' &&
-                         prod[k + 1] <= 'Z') { // Non-terminal
-                int next_nt_index = prod[k + 1] - 'A';
-                for (int m = 0; m < strlen(firstSets[next_nt_index]); m++) {
-                  if (firstSets[next_nt_index][m] != 'e') {
-                    addToSet(followSets[nt_index], firstSets[next_nt_index][m]);
-                  }
-                }
-              }
-            }
+   strcpy(table[0][5], "$");
 
-            // If it's the last symbol or followed by ε, add FOLLOW of LHS
-            // non-terminal
-            if (k == len - 1 || containsEpsilon(firstSets[prod[k + 1] - 'A'])) {
-              for (int n = 0; n < strlen(followSets[i]); n++) {
-                if (!strchr(followSets[nt_index], followSets[i][n])) {
-                  addToSet(followSets[nt_index], followSets[i][n]);
-                  changed = true;
-                }
-              }
-            }
-          }
-        }
+   strcpy(table[1][0], "S");
+
+   strcpy(table[2][0], "A");
+
+   strcpy(table[3][0], "B");
+
+   strcpy(table[4][0], "C");
+
+   printf("\n--------------------------------------------------------\n");
+
+   for (i = 0; i < 5; i++)
+      for (j = 0; j < 6; j++)
+      {
+         printf("%-10s", table[i][j]);
+         if (j == 5)
+            printf("\n--------------------------------------------------------\n");
       }
-    }
-  }
-}
-
-int main() {
-  int num_non_terminals;
-
-  printf("Enter the number of non-terminals: ");
-  scanf("%d", &num_non_terminals);
-
-  ParseTableEntry parseTable[num_non_terminals];
-  char firstSets[num_non_terminals][20];
-  char followSets[num_non_terminals][20];
-
-  for (int i = 0; i < num_non_terminals; i++) {
-    memset(firstSets[i], 0, sizeof(firstSets[i]));
-    memset(followSets[i], 0, sizeof(followSets[i]));
-
-    printf("Enter non-terminal %d: ", i + 1);
-    scanf("%s", parseTable[i].non_terminal);
-
-    printf("Enter productions for %s (use 'NULL' for empty slots, max %d "
-           "productions):\n",
-           parseTable[i].non_terminal, MAX_NON_TERMINALS);
-    for (int j = 0; j < MAX_NON_TERMINALS; j++) {
-      printf("Production %d: ", j + 1);
-      scanf("%s", parseTable[i].productions[j]);
-    }
-  }
-
-  calculateFirstSet(num_non_terminals, parseTable, firstSets);
-  calculateFollowSet(num_non_terminals, parseTable, firstSets, followSets);
-
-  printf("\nFIRST and FOLLOW Sets:\n");
-  for (int i = 0; i < num_non_terminals; i++) {
-    printf("FIRST(%s) = %s\n", parseTable[i].non_terminal, firstSets[i]);
-    printf("FOLLOW(%s) = %s\n", parseTable[i].non_terminal, followSets[i]);
-  }
-
-  return 0;
 }
