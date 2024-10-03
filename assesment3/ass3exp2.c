@@ -1,104 +1,144 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-#define MAX_SYMBOLS 100
-#define MAX_RULES 100
-#define MAX_STRING 1000
+#define MAX 10
 
-char terminals[MAX_SYMBOLS][10];
-char non_terminals[MAX_SYMBOLS][10];
-char productions[MAX_RULES][20];
-int num_terminals, num_non_terminals, num_rules;
-char input[MAX_STRING];
-int input_index = 0;
+int parsingTable[MAX][MAX] = {
+    {1, 0, 0, 1, 0, 0},
+    {0, 2, 0, 0, 3, 3},
+    {4, 0, 0, 4, 0, 0},
+    {0, 6, 5, 0, 6, 6},
+    {8, 0, 0, 7, 0, 0}
+};
 
-int parse_E();
-int parse_T();
-int parse_F();
+char *rules[] = {
+    "E -> TH",
+    "H -> +TH",
+    "H -> @",
+    "T -> FI",
+    "I -> *FI",
+    "I -> @",
+    "F -> (E)",
+    "F -> i"
+};
 
-int match(char expected) {
-    if (input[input_index] == expected) {
-        printf("Matched %c\n", expected);
-        input_index++;
-        return 1;
+char stack[MAX];
+int top = -1;
+
+void pushStack(char symbol) {
+    if (top == MAX - 1) {
+        printf("Stack Overflow\n");
+    } else {
+        stack[++top] = symbol;
     }
-    return 0;
 }
 
-int parse_E() {
-    printf("Parsing E\n");
-    if (parse_T()) {
-        while (input[input_index] == '+') {
-            if (match('+') && parse_T()) {
-                continue;
+char popStack() {
+    if (top == -1) {
+        printf("Stack Underflow\n");
+        return '\0';
+    } else {
+        return stack[top--];
+    }
+}
+
+int isStackEmpty() {
+    return top == -1;
+}
+
+void showStack(char input[], int index) {
+    printf("Stack: ");
+    for (int i = top; i >= 0; i--) {
+        printf("%c", stack[i]);
+    }
+    printf("\nInput: ");
+    for (int i = index; input[i] != '\0'; i++) {
+        printf("%c", input[i]);
+    }
+    printf("\n");
+}
+
+int getTerminalIndex(char symbol) {
+    switch (symbol) {
+        case '+': return 1;
+        case '*': return 2;
+        case '(': return 3;
+        case ')': return 4;
+        case 'i': return 0;
+        case '$': return 5;
+        default: return -1;
+    }
+}
+
+int getNonTerminalIndex(char symbol) {
+    switch (symbol) {
+        case 'E': return 0;
+        case 'H': return 1;
+        case 'T': return 2;
+        case 'I': return 3;
+        case 'F': return 4;
+        default: return -1;
+    }
+}
+
+void parseInput(char input[]) {
+    int i = 0;
+    pushStack('$');
+    pushStack('E');
+
+    while (!isStackEmpty()) {
+        showStack(input, i);
+        char stackTop = stack[top];
+        char currentInput = input[i];
+
+        if (currentInput == '$' && stackTop == '$') {
+            printf("Input string is successfully parsed.\n");
+            return;
+        }
+
+        if (stackTop == currentInput) {
+            printf("Match: %c\n", currentInput);
+            popStack();
+            i++;
+        } else if (isupper(stackTop)) {
+            int row = getNonTerminalIndex(stackTop);
+            int col = getTerminalIndex(currentInput);
+
+            if (row != -1 && col != -1 && parsingTable[row][col] != 0) {
+                popStack();
+                printf("Production used: %s\n", rules[parsingTable[row][col] - 1]);
+
+                char *prod = rules[parsingTable[row][col] - 1];
+                for (int j = strlen(prod) - 1; j > 3; j--) {
+                    if (prod[j] != ' ' && prod[j] != '@') {
+                        pushStack(prod[j]);
+                    }
+                }
+            } else {
+                printf("Error: No matching production found for %c\n", stackTop);
+                return;
             }
-            break;
+        } else {
+            printf("Error: Unexpected terminal symbol at stack: %c and input: %c\n", stackTop, currentInput);
+            return;
         }
-        return 1;
     }
-    return 0;
-}
 
-int parse_T() {
-    printf("Parsing T\n");
-    if (parse_F()) {
-        while (input[input_index] == '*') {
-            if (match('*') && parse_F()) {
-                continue;
-            }
-            break;
-        }
-        return 1;
+    if (input[i] == '$') {
+        printf("Input string is successfully parsed.\n");
+    } else {
+        printf("Error: Input string is not fully consumed.\n");
     }
-    return 0;
-}
-
-int parse_F() {
-    printf("Parsing F\n");
-    if (input[input_index] == '(') {
-        if (match('(') && parse_E() && match(')')) {
-            return 1;
-        }
-    } else if (input[input_index] == 'i' && input[input_index + 1] == 'd') {
-        if (match('i') && match('d')) {
-            return 1;
-        }
-    }
-    return 0;
 }
 
 int main() {
-    printf("Enter the number of terminals: ");
-    scanf("%d", &num_terminals);
-    printf("Enter the terminals:\n");
-    for (int i = 0; i < num_terminals; i++) {
-        scanf("%s", terminals[i]);
-    }
+    char input[50];
 
-    printf("Enter the number of non-terminals: ");
-    scanf("%d", &num_non_terminals);
-    printf("Enter the non-terminals:\n");
-    for (int i = 0; i < num_non_terminals; i++) {
-        scanf("%s", non_terminals[i]);
-    }
-
-    printf("Enter the number of production rules: ");
-    scanf("%d", &num_rules);
-    printf("Enter the production rules (format: A->abc):\n");
-    for (int i = 0; i < num_rules; i++) {
-        scanf("%s", productions[i]);
-    }
-
-    printf("Enter the string to parse: ");
+    printf("Enter the input string (terminated by $): ");
     scanf("%s", input);
 
-    if (parse_E() && input[input_index] == '\0') {
-        printf("String is valid!\n");
-    } else {
-        printf("String is invalid!\n");
-    }
+    parseInput(input);
 
     return 0;
 }
