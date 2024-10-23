@@ -1,4 +1,8 @@
 modules = ["c-clang14"]
+run = "sda"
 
 [nix]
 channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "sda"]
