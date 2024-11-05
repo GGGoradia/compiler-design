@@ -67,43 +67,28 @@
 
 
 /* First part of user prologue.  */
-#line 1 "three_address.y"
+#line 1 "parser.y"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "three_address.h"
 
-void yyerror(const char* s);
-int yylex(void);
-extern int line_no;
+// Declare yylex and yyerror to resolve implicit declaration warnings
+int yylex();
+int yyerror(char *s);
 
-int temp_count = 0;
-int label_count = 0;
+int temp_var = 0; // Temporary variable counter for TAC
 
-char* new_temp() {
-    char* temp = (char*)malloc(10);
-    sprintf(temp, "t%d", temp_count++);
-    return temp;
+void emit(char *op, char *arg1, char *arg2, char *result) {
+    printf("%s = %s %s %s\n", result, arg1, op, arg2);
 }
 
-char* new_label() {
-    char* label = (char*)malloc(10);
-    sprintf(label, "L%d", label_count++);
-    return label;
-}
-
-List* merge(List* l1, List* l2) {
-    if (!l1) return l2;
-    if (!l2) return l1;
-    List* temp = l1;
-    while (temp->next) temp = temp->next;
-    temp->next = l2;
-    return l1;
+void emit_assign(char *arg1, char *result) {
+    printf("%s = %s\n", result, arg1);
 }
 
 
-#line 107 "y.tab.c"
+#line 92 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -147,30 +132,8 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    NUMBER = 258,                  /* NUMBER  */
-    IDENTIFIER = 259,              /* IDENTIFIER  */
-    INT = 260,                     /* INT  */
-    IF = 261,                      /* IF  */
-    ELSE = 262,                    /* ELSE  */
-    WHILE = 263,                   /* WHILE  */
-    ASSIGN = 264,                  /* ASSIGN  */
-    EQ = 265,                      /* EQ  */
-    NE = 266,                      /* NE  */
-    LT = 267,                      /* LT  */
-    GT = 268,                      /* GT  */
-    LE = 269,                      /* LE  */
-    GE = 270,                      /* GE  */
-    PLUS = 271,                    /* PLUS  */
-    MINUS = 272,                   /* MINUS  */
-    MULTIPLY = 273,                /* MULTIPLY  */
-    DIVIDE = 274,                  /* DIVIDE  */
-    LPAREN = 275,                  /* LPAREN  */
-    RPAREN = 276,                  /* RPAREN  */
-    LBRACE = 277,                  /* LBRACE  */
-    RBRACE = 278,                  /* RBRACE  */
-    SEMICOLON = 279,               /* SEMICOLON  */
-    UMINUS = 280,                  /* UMINUS  */
-    IFX = 281                      /* IFX  */
+    NUM = 258,                     /* NUM  */
+    ID = 259                       /* ID  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -179,42 +142,19 @@ extern int yydebug;
 #define YYEOF 0
 #define YYerror 256
 #define YYUNDEF 257
-#define NUMBER 258
-#define IDENTIFIER 259
-#define INT 260
-#define IF 261
-#define ELSE 262
-#define WHILE 263
-#define ASSIGN 264
-#define EQ 265
-#define NE 266
-#define LT 267
-#define GT 268
-#define LE 269
-#define GE 270
-#define PLUS 271
-#define MINUS 272
-#define MULTIPLY 273
-#define DIVIDE 274
-#define LPAREN 275
-#define RPAREN 276
-#define LBRACE 277
-#define RBRACE 278
-#define SEMICOLON 279
-#define UMINUS 280
-#define IFX 281
+#define NUM 258
+#define ID 259
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 37 "three_address.y"
+#line 22 "parser.y"
 
-    int number;
-    char* string;
-    Attrs attrs;
+    int num;
+    char *id;
 
-#line 218 "y.tab.c"
+#line 158 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -237,36 +177,19 @@ enum yysymbol_kind_t
   YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
   YYSYMBOL_YYerror = 1,                    /* error  */
   YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
-  YYSYMBOL_NUMBER = 3,                     /* NUMBER  */
-  YYSYMBOL_IDENTIFIER = 4,                 /* IDENTIFIER  */
-  YYSYMBOL_INT = 5,                        /* INT  */
-  YYSYMBOL_IF = 6,                         /* IF  */
-  YYSYMBOL_ELSE = 7,                       /* ELSE  */
-  YYSYMBOL_WHILE = 8,                      /* WHILE  */
-  YYSYMBOL_ASSIGN = 9,                     /* ASSIGN  */
-  YYSYMBOL_EQ = 10,                        /* EQ  */
-  YYSYMBOL_NE = 11,                        /* NE  */
-  YYSYMBOL_LT = 12,                        /* LT  */
-  YYSYMBOL_GT = 13,                        /* GT  */
-  YYSYMBOL_LE = 14,                        /* LE  */
-  YYSYMBOL_GE = 15,                        /* GE  */
-  YYSYMBOL_PLUS = 16,                      /* PLUS  */
-  YYSYMBOL_MINUS = 17,                     /* MINUS  */
-  YYSYMBOL_MULTIPLY = 18,                  /* MULTIPLY  */
-  YYSYMBOL_DIVIDE = 19,                    /* DIVIDE  */
-  YYSYMBOL_LPAREN = 20,                    /* LPAREN  */
-  YYSYMBOL_RPAREN = 21,                    /* RPAREN  */
-  YYSYMBOL_LBRACE = 22,                    /* LBRACE  */
-  YYSYMBOL_RBRACE = 23,                    /* RBRACE  */
-  YYSYMBOL_SEMICOLON = 24,                 /* SEMICOLON  */
-  YYSYMBOL_UMINUS = 25,                    /* UMINUS  */
-  YYSYMBOL_IFX = 26,                       /* IFX  */
-  YYSYMBOL_YYACCEPT = 27,                  /* $accept  */
-  YYSYMBOL_program = 28,                   /* program  */
-  YYSYMBOL_stmt_list = 29,                 /* stmt_list  */
-  YYSYMBOL_stmt = 30,                      /* stmt  */
-  YYSYMBOL_bool_expr = 31,                 /* bool_expr  */
-  YYSYMBOL_expr = 32                       /* expr  */
+  YYSYMBOL_NUM = 3,                        /* NUM  */
+  YYSYMBOL_ID = 4,                         /* ID  */
+  YYSYMBOL_5_ = 5,                         /* '+'  */
+  YYSYMBOL_6_ = 6,                         /* '-'  */
+  YYSYMBOL_7_ = 7,                         /* '*'  */
+  YYSYMBOL_8_ = 8,                         /* '/'  */
+  YYSYMBOL_9_ = 9,                         /* '%'  */
+  YYSYMBOL_10_ = 10,                       /* ';'  */
+  YYSYMBOL_11_ = 11,                       /* '='  */
+  YYSYMBOL_YYACCEPT = 12,                  /* $accept  */
+  YYSYMBOL_program = 13,                   /* program  */
+  YYSYMBOL_stmt = 14,                      /* stmt  */
+  YYSYMBOL_expr = 15                       /* expr  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -592,21 +515,21 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  12
+#define YYFINAL  2
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   61
+#define YYLAST   18
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  27
+#define YYNTOKENS  12
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  6
+#define YYNNTS  4
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  19
+#define YYNRULES  11
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  45
+#define YYNSTATES  20
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   281
+#define YYMAXUTOK   259
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -623,6 +546,10 @@ static const yytype_int8 yytranslate[] =
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     9,     2,     2,
+       2,     2,     7,     5,     2,     6,     2,     8,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,    10,
+       2,    11,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -641,22 +568,15 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26
+       2,     2,     2,     2,     2,     2,     1,     2,     3,     4
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_int8 yyrline[] =
 {
-       0,    60,    60,    66,    69,    77,    83,    91,   100,   105,
-     114,   123,   134,   141,   145,   154,   163,   172,   181,   185
+       0,    35,    35,    36,    40,    46,    52,    58,    64,    70,
+      76,    81
 };
 #endif
 
@@ -672,11 +592,9 @@ static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "\"end of file\"", "error", "\"invalid token\"", "NUMBER", "IDENTIFIER",
-  "INT", "IF", "ELSE", "WHILE", "ASSIGN", "EQ", "NE", "LT", "GT", "LE",
-  "GE", "PLUS", "MINUS", "MULTIPLY", "DIVIDE", "LPAREN", "RPAREN",
-  "LBRACE", "RBRACE", "SEMICOLON", "UMINUS", "IFX", "$accept", "program",
-  "stmt_list", "stmt", "bool_expr", "expr", YY_NULLPTR
+  "\"end of file\"", "error", "\"invalid token\"", "NUM", "ID", "'+'",
+  "'-'", "'*'", "'/'", "'%'", "';'", "'='", "$accept", "program", "stmt",
+  "expr", YY_NULLPTR
 };
 
 static const char *
@@ -686,7 +604,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-18)
+#define YYPACT_NINF (-7)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -700,11 +618,8 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-       3,     1,   -17,    -4,     3,    17,     3,   -18,    -2,    -2,
-      -2,     0,   -18,   -18,   -18,   -18,    -2,    -2,    32,     5,
-      28,     6,   -18,   -18,    36,    -2,    -2,    -2,    -2,   -18,
-       3,    -2,    -2,    -2,     3,   -18,    -5,    -5,   -18,   -18,
-     -18,    42,    42,    42,   -18
+      -7,    11,    -7,    -6,     8,    13,    -7,    -7,    -7,    -5,
+      13,    13,    13,    13,    13,     5,     5,    -7,    -7,    -7
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -712,23 +627,20 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     0,     0,     0,     0,     0,     2,     3,     0,     0,
-       0,     0,     1,     4,    12,    13,     0,     0,     0,     0,
-       0,     0,     8,    19,     0,     0,     0,     0,     0,     5,
-       0,     0,     0,     0,     0,    18,    14,    15,    16,    17,
-       6,     9,    10,    11,     7
+       3,     0,     1,     0,     0,     0,     2,    10,    11,     4,
+       0,     0,     0,     0,     0,     5,     6,     7,     8,     9
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -18,   -18,    15,    -6,    23,     4
+      -7,    -7,    -7,    -4
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     5,     6,     7,    19,    20
+       0,     1,     4,     9
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -736,49 +648,36 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      13,    14,    15,     9,     1,    13,     2,     1,     3,     2,
-       8,     3,    18,    27,    28,    16,    10,    12,    17,    11,
-      23,    24,     4,    22,    40,     4,    30,    34,    44,    36,
-      37,    38,    39,    21,     0,    41,    42,    43,    31,    32,
-      33,     0,     0,     0,    25,    26,    27,    28,    25,    26,
-      27,    28,    25,    26,    27,    28,    29,    35,    25,    26,
-      27,    28
+      10,    11,    12,    13,    14,     5,    15,    16,    17,    18,
+      19,     2,    12,    13,    14,     3,     7,     8,     6
 };
 
 static const yytype_int8 yycheck[] =
 {
-       6,     3,     4,    20,     4,    11,     6,     4,     8,     6,
-       9,     8,     8,    18,    19,    17,    20,     0,    20,     4,
-      16,    17,    22,    23,    30,    22,    21,    21,    34,    25,
-      26,    27,    28,    10,    -1,    31,    32,    33,    10,    11,
-      12,    -1,    -1,    -1,    16,    17,    18,    19,    16,    17,
-      18,    19,    16,    17,    18,    19,    24,    21,    16,    17,
-      18,    19
+       5,     6,     7,     8,     9,    11,    10,    11,    12,    13,
+      14,     0,     7,     8,     9,     4,     3,     4,    10
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     4,     6,     8,    22,    28,    29,    30,     9,    20,
-      20,    29,     0,    30,     3,     4,    17,    20,    32,    31,
-      32,    31,    23,    32,    32,    16,    17,    18,    19,    24,
-      21,    10,    11,    12,    21,    21,    32,    32,    32,    32,
-      30,    32,    32,    32,    30
+       0,    13,     0,     4,    14,    11,    10,     3,     4,    15,
+       5,     6,     7,     8,     9,    15,    15,    15,    15,    15
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    27,    28,    29,    29,    30,    30,    30,    30,    31,
-      31,    31,    32,    32,    32,    32,    32,    32,    32,    32
+       0,    12,    13,    13,    14,    15,    15,    15,    15,    15,
+      15,    15
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     1,     2,     4,     5,     5,     3,     3,
-       3,     3,     1,     1,     3,     3,     3,     3,     3,     2
+       0,     2,     3,     0,     3,     3,     3,     3,     3,     3,
+       1,     1
 };
 
 
@@ -1241,223 +1140,89 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 2: /* program: stmt_list  */
-#line 60 "three_address.y"
-                   {
-    printf("\nGenerated Three Address Code:\n");
-    printf("%s", (yyvsp[0].attrs).code);
-}
-#line 1251 "y.tab.c"
+  case 4: /* stmt: ID '=' expr  */
+#line 40 "parser.y"
+                 { 
+        emit_assign((yyvsp[0].id), (yyvsp[-2].id));
+    }
+#line 1149 "y.tab.c"
     break;
 
-  case 3: /* stmt_list: stmt  */
-#line 66 "three_address.y"
-                {
-    (yyval.attrs).code = (yyvsp[0].attrs).code;
-}
-#line 1259 "y.tab.c"
+  case 5: /* expr: expr '+' expr  */
+#line 46 "parser.y"
+                  { 
+        char temp[10];
+        sprintf(temp, "t%d", temp_var++);
+        emit("+", (yyvsp[-2].id), (yyvsp[0].id), temp);
+        (yyval.id) = strdup(temp);
+    }
+#line 1160 "y.tab.c"
     break;
 
-  case 4: /* stmt_list: stmt_list stmt  */
-#line 69 "three_address.y"
-                 {
-    int len = strlen((yyvsp[-1].attrs).code) + strlen((yyvsp[0].attrs).code) + 1;
-    char* temp = (char*)malloc(len);
-    sprintf(temp, "%s%s", (yyvsp[-1].attrs).code, (yyvsp[0].attrs).code);
-    (yyval.attrs).code = temp;
-}
-#line 1270 "y.tab.c"
+  case 6: /* expr: expr '-' expr  */
+#line 52 "parser.y"
+                    {
+        char temp[10];
+        sprintf(temp, "t%d", temp_var++);
+        emit("-", (yyvsp[-2].id), (yyvsp[0].id), temp);
+        (yyval.id) = strdup(temp);
+    }
+#line 1171 "y.tab.c"
     break;
 
-  case 5: /* stmt: IDENTIFIER ASSIGN expr SEMICOLON  */
-#line 77 "three_address.y"
-                                       {
-    int len = ((yyvsp[-1].attrs).code ? strlen((yyvsp[-1].attrs).code) : 0) + strlen((yyvsp[-3].string)) + 20;
-    char* temp = (char*)malloc(len);
-    sprintf(temp, "%s%s = %s\n", (yyvsp[-1].attrs).code ? (yyvsp[-1].attrs).code : "", (yyvsp[-3].string), (yyvsp[-1].attrs).addr);
-    (yyval.attrs).code = temp;
-}
-#line 1281 "y.tab.c"
+  case 7: /* expr: expr '*' expr  */
+#line 58 "parser.y"
+                    {
+        char temp[10];
+        sprintf(temp, "t%d", temp_var++);
+        emit("*", (yyvsp[-2].id), (yyvsp[0].id), temp);
+        (yyval.id) = strdup(temp);
+    }
+#line 1182 "y.tab.c"
     break;
 
-  case 6: /* stmt: IF LPAREN bool_expr RPAREN stmt  */
-#line 83 "three_address.y"
-                                            {
-    char* label = new_label();
-    int len = strlen((yyvsp[-2].attrs).code) + strlen((yyvsp[0].attrs).code) + 50;
-    char* temp = (char*)malloc(len);
-    sprintf(temp, "%sif %s goto %s\n%s%s:\n", 
-        (yyvsp[-2].attrs).code, (yyvsp[-2].attrs).addr, label, (yyvsp[0].attrs).code, label);
-    (yyval.attrs).code = temp;
-}
-#line 1294 "y.tab.c"
+  case 8: /* expr: expr '/' expr  */
+#line 64 "parser.y"
+                    {
+        char temp[10];
+        sprintf(temp, "t%d", temp_var++);
+        emit("/", (yyvsp[-2].id), (yyvsp[0].id), temp);
+        (yyval.id) = strdup(temp);
+    }
+#line 1193 "y.tab.c"
     break;
 
-  case 7: /* stmt: WHILE LPAREN bool_expr RPAREN stmt  */
-#line 91 "three_address.y"
-                                     {
-    char* label1 = new_label();
-    char* label2 = new_label();
-    int len = strlen((yyvsp[-2].attrs).code) + strlen((yyvsp[0].attrs).code) + 100;
-    char* temp = (char*)malloc(len);
-    sprintf(temp, "%s:\n%sif %s goto %s\ngoto %s\n%s%s:\n",
-        label1, (yyvsp[-2].attrs).code, (yyvsp[-2].attrs).addr, label2, label1, (yyvsp[0].attrs).code, label2);
-    (yyval.attrs).code = temp;
-}
-#line 1308 "y.tab.c"
+  case 9: /* expr: expr '%' expr  */
+#line 70 "parser.y"
+                    {
+        char temp[10];
+        sprintf(temp, "t%d", temp_var++);
+        emit("%", (yyvsp[-2].id), (yyvsp[0].id), temp);
+        (yyval.id) = strdup(temp);
+    }
+#line 1204 "y.tab.c"
     break;
 
-  case 8: /* stmt: LBRACE stmt_list RBRACE  */
-#line 100 "three_address.y"
-                          {
-    (yyval.attrs).code = (yyvsp[-1].attrs).code;
-}
-#line 1316 "y.tab.c"
+  case 10: /* expr: NUM  */
+#line 76 "parser.y"
+          {
+        char temp[10];
+        sprintf(temp, "%d", (yyvsp[0].num));
+        (yyval.id) = strdup(temp);
+    }
+#line 1214 "y.tab.c"
     break;
 
-  case 9: /* bool_expr: expr EQ expr  */
-#line 105 "three_address.y"
-                        {
-    char* temp = new_temp();
-    int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
-    char* code = (char*)malloc(len);
-    sprintf(code, "%s%s%s = %s == %s\n", 
-        (yyvsp[-2].attrs).code ? (yyvsp[-2].attrs).code : "", (yyvsp[0].attrs).code ? (yyvsp[0].attrs).code : "", temp, (yyvsp[-2].attrs).addr, (yyvsp[0].attrs).addr);
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1330 "y.tab.c"
-    break;
-
-  case 10: /* bool_expr: expr NE expr  */
-#line 114 "three_address.y"
-               {
-    char* temp = new_temp();
-    int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
-    char* code = (char*)malloc(len);
-    sprintf(code, "%s%s%s = %s != %s\n", 
-        (yyvsp[-2].attrs).code ? (yyvsp[-2].attrs).code : "", (yyvsp[0].attrs).code ? (yyvsp[0].attrs).code : "", temp, (yyvsp[-2].attrs).addr, (yyvsp[0].attrs).addr);
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1344 "y.tab.c"
-    break;
-
-  case 11: /* bool_expr: expr LT expr  */
-#line 123 "three_address.y"
-               {
-    char* temp = new_temp();
-    int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
-    char* code = (char*)malloc(len);
-    sprintf(code, "%s%s%s = %s < %s\n", 
-        (yyvsp[-2].attrs).code ? (yyvsp[-2].attrs).code : "", (yyvsp[0].attrs).code ? (yyvsp[0].attrs).code : "", temp, (yyvsp[-2].attrs).addr, (yyvsp[0].attrs).addr);
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1358 "y.tab.c"
-    break;
-
-  case 12: /* expr: NUMBER  */
-#line 134 "three_address.y"
-             {
-    char* temp = new_temp();
-    char* code = (char*)malloc(30);
-    sprintf(code, "%s = %d\n", temp, (yyvsp[0].number));
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1370 "y.tab.c"
-    break;
-
-  case 13: /* expr: IDENTIFIER  */
-#line 141 "three_address.y"
-             {
-    (yyval.attrs).addr = strdup((yyvsp[0].string));
-    (yyval.attrs).code = NULL;
-}
-#line 1379 "y.tab.c"
-    break;
-
-  case 14: /* expr: expr PLUS expr  */
-#line 145 "three_address.y"
-                 {
-    char* temp = new_temp();
-    int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
-    char* code = (char*)malloc(len);
-    sprintf(code, "%s%s%s = %s + %s\n", 
-        (yyvsp[-2].attrs).code ? (yyvsp[-2].attrs).code : "", (yyvsp[0].attrs).code ? (yyvsp[0].attrs).code : "", temp, (yyvsp[-2].attrs).addr, (yyvsp[0].attrs).addr);
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1393 "y.tab.c"
-    break;
-
-  case 15: /* expr: expr MINUS expr  */
-#line 154 "three_address.y"
-                  {
-    char* temp = new_temp();
-    int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
-    char* code = (char*)malloc(len);
-    sprintf(code, "%s%s%s = %s - %s\n", 
-        (yyvsp[-2].attrs).code ? (yyvsp[-2].attrs).code : "", (yyvsp[0].attrs).code ? (yyvsp[0].attrs).code : "", temp, (yyvsp[-2].attrs).addr, (yyvsp[0].attrs).addr);
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1407 "y.tab.c"
-    break;
-
-  case 16: /* expr: expr MULTIPLY expr  */
-#line 163 "three_address.y"
-                     {
-    char* temp = new_temp();
-    int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
-    char* code = (char*)malloc(len);
-    sprintf(code, "%s%s%s = %s * %s\n", 
-        (yyvsp[-2].attrs).code ? (yyvsp[-2].attrs).code : "", (yyvsp[0].attrs).code ? (yyvsp[0].attrs).code : "", temp, (yyvsp[-2].attrs).addr, (yyvsp[0].attrs).addr);
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1421 "y.tab.c"
-    break;
-
-  case 17: /* expr: expr DIVIDE expr  */
-#line 172 "three_address.y"
-                   {
-    char* temp = new_temp();
-    int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
-    char* code = (char*)malloc(len);
-    sprintf(code, "%s%s%s = %s / %s\n", 
-        (yyvsp[-2].attrs).code ? (yyvsp[-2].attrs).code : "", (yyvsp[0].attrs).code ? (yyvsp[0].attrs).code : "", temp, (yyvsp[-2].attrs).addr, (yyvsp[0].attrs).addr);
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1435 "y.tab.c"
-    break;
-
-  case 18: /* expr: LPAREN expr RPAREN  */
-#line 181 "three_address.y"
-                     {
-    (yyval.attrs).addr = (yyvsp[-1].attrs).addr;
-    (yyval.attrs).code = (yyvsp[-1].attrs).code;
-}
-#line 1444 "y.tab.c"
-    break;
-
-  case 19: /* expr: MINUS expr  */
-#line 185 "three_address.y"
-                          {
-    char* temp = new_temp();
-    int len = ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 50;
-    char* code = (char*)malloc(len);
-    sprintf(code, "%s%s = -%s\n", (yyvsp[0].attrs).code ? (yyvsp[0].attrs).code : "", temp, (yyvsp[0].attrs).addr);
-    (yyval.attrs).addr = temp;
-    (yyval.attrs).code = code;
-}
-#line 1457 "y.tab.c"
+  case 11: /* expr: ID  */
+#line 81 "parser.y"
+         {
+        (yyval.id) = (yyvsp[0].id);
+    }
+#line 1222 "y.tab.c"
     break;
 
 
-#line 1461 "y.tab.c"
+#line 1226 "y.tab.c"
 
       default: break;
     }
@@ -1650,15 +1415,14 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 195 "three_address.y"
-
-
-void yyerror(const char* s) {
-    fprintf(stderr, "Error at line %d: %s\n", line_no, s);
-}
+#line 86 "parser.y"
 
 int main() {
-    printf("Enter program (press Ctrl+D to end):\n");
     yyparse();
+    return 0;
+}
+
+int yyerror(char *s) {
+    fprintf(stderr, "%s\n", s);
     return 0;
 }

@@ -54,30 +54,8 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    NUMBER = 258,                  /* NUMBER  */
-    IDENTIFIER = 259,              /* IDENTIFIER  */
-    INT = 260,                     /* INT  */
-    IF = 261,                      /* IF  */
-    ELSE = 262,                    /* ELSE  */
-    WHILE = 263,                   /* WHILE  */
-    ASSIGN = 264,                  /* ASSIGN  */
-    EQ = 265,                      /* EQ  */
-    NE = 266,                      /* NE  */
-    LT = 267,                      /* LT  */
-    GT = 268,                      /* GT  */
-    LE = 269,                      /* LE  */
-    GE = 270,                      /* GE  */
-    PLUS = 271,                    /* PLUS  */
-    MINUS = 272,                   /* MINUS  */
-    MULTIPLY = 273,                /* MULTIPLY  */
-    DIVIDE = 274,                  /* DIVIDE  */
-    LPAREN = 275,                  /* LPAREN  */
-    RPAREN = 276,                  /* RPAREN  */
-    LBRACE = 277,                  /* LBRACE  */
-    RBRACE = 278,                  /* RBRACE  */
-    SEMICOLON = 279,               /* SEMICOLON  */
-    UMINUS = 280,                  /* UMINUS  */
-    IFX = 281                      /* IFX  */
+    NUM = 258,                     /* NUM  */
+    ID = 259                       /* ID  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -86,42 +64,19 @@ extern int yydebug;
 #define YYEOF 0
 #define YYerror 256
 #define YYUNDEF 257
-#define NUMBER 258
-#define IDENTIFIER 259
-#define INT 260
-#define IF 261
-#define ELSE 262
-#define WHILE 263
-#define ASSIGN 264
-#define EQ 265
-#define NE 266
-#define LT 267
-#define GT 268
-#define LE 269
-#define GE 270
-#define PLUS 271
-#define MINUS 272
-#define MULTIPLY 273
-#define DIVIDE 274
-#define LPAREN 275
-#define RPAREN 276
-#define LBRACE 277
-#define RBRACE 278
-#define SEMICOLON 279
-#define UMINUS 280
-#define IFX 281
+#define NUM 258
+#define ID 259
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 37 "three_address.y"
+#line 22 "parser.y"
 
-    int number;
-    char* string;
-    Attrs attrs;
+    int num;
+    char *id;
 
-#line 125 "y.tab.h"
+#line 80 "y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
