@@ -67,7 +67,7 @@
 
 
 /* First part of user prologue.  */
-#line 1 "threeadd.y"
+#line 1 "three_address.y"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,7 +103,7 @@ List* merge(List* l1, List* l2) {
 }
 
 
-#line 107 "threeadd.tab.c"
+#line 107 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -126,7 +126,10 @@ List* merge(List* l1, List* l2) {
 #  endif
 # endif
 
-
+/* Use api.header.include to #include this header
+   instead of duplicating it here.  */
+#ifndef YY_YY_Y_TAB_H_INCLUDED
+# define YY_YY_Y_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -171,18 +174,47 @@ extern int yydebug;
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
+#define NUMBER 258
+#define IDENTIFIER 259
+#define INT 260
+#define IF 261
+#define ELSE 262
+#define WHILE 263
+#define ASSIGN 264
+#define EQ 265
+#define NE 266
+#define LT 267
+#define GT 268
+#define LE 269
+#define GE 270
+#define PLUS 271
+#define MINUS 272
+#define MULTIPLY 273
+#define DIVIDE 274
+#define LPAREN 275
+#define RPAREN 276
+#define LBRACE 277
+#define RBRACE 278
+#define SEMICOLON 279
+#define UMINUS 280
+#define IFX 281
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 37 "threeadd.y"
+#line 37 "three_address.y"
 
     int number;
     char* string;
     Attrs attrs;
 
-#line 186 "threeadd.tab.c"
+#line 218 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -197,7 +229,7 @@ extern YYSTYPE yylval;
 int yyparse (void);
 
 
-
+#endif /* !YY_YY_Y_TAB_H_INCLUDED  */
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -1210,46 +1242,46 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: stmt_list  */
-#line 60 "threeadd.y"
+#line 60 "three_address.y"
                    {
     printf("\nGenerated Three Address Code:\n");
     printf("%s", (yyvsp[0].attrs).code);
 }
-#line 1219 "threeadd.tab.c"
+#line 1251 "y.tab.c"
     break;
 
   case 3: /* stmt_list: stmt  */
-#line 66 "threeadd.y"
+#line 66 "three_address.y"
                 {
     (yyval.attrs).code = (yyvsp[0].attrs).code;
 }
-#line 1227 "threeadd.tab.c"
+#line 1259 "y.tab.c"
     break;
 
   case 4: /* stmt_list: stmt_list stmt  */
-#line 69 "threeadd.y"
+#line 69 "three_address.y"
                  {
     int len = strlen((yyvsp[-1].attrs).code) + strlen((yyvsp[0].attrs).code) + 1;
     char* temp = (char*)malloc(len);
     sprintf(temp, "%s%s", (yyvsp[-1].attrs).code, (yyvsp[0].attrs).code);
     (yyval.attrs).code = temp;
 }
-#line 1238 "threeadd.tab.c"
+#line 1270 "y.tab.c"
     break;
 
   case 5: /* stmt: IDENTIFIER ASSIGN expr SEMICOLON  */
-#line 77 "threeadd.y"
+#line 77 "three_address.y"
                                        {
     int len = ((yyvsp[-1].attrs).code ? strlen((yyvsp[-1].attrs).code) : 0) + strlen((yyvsp[-3].string)) + 20;
     char* temp = (char*)malloc(len);
     sprintf(temp, "%s%s = %s\n", (yyvsp[-1].attrs).code ? (yyvsp[-1].attrs).code : "", (yyvsp[-3].string), (yyvsp[-1].attrs).addr);
     (yyval.attrs).code = temp;
 }
-#line 1249 "threeadd.tab.c"
+#line 1281 "y.tab.c"
     break;
 
   case 6: /* stmt: IF LPAREN bool_expr RPAREN stmt  */
-#line 83 "threeadd.y"
+#line 83 "three_address.y"
                                             {
     char* label = new_label();
     int len = strlen((yyvsp[-2].attrs).code) + strlen((yyvsp[0].attrs).code) + 50;
@@ -1258,11 +1290,11 @@ yyreduce:
         (yyvsp[-2].attrs).code, (yyvsp[-2].attrs).addr, label, (yyvsp[0].attrs).code, label);
     (yyval.attrs).code = temp;
 }
-#line 1262 "threeadd.tab.c"
+#line 1294 "y.tab.c"
     break;
 
   case 7: /* stmt: WHILE LPAREN bool_expr RPAREN stmt  */
-#line 91 "threeadd.y"
+#line 91 "three_address.y"
                                      {
     char* label1 = new_label();
     char* label2 = new_label();
@@ -1272,19 +1304,19 @@ yyreduce:
         label1, (yyvsp[-2].attrs).code, (yyvsp[-2].attrs).addr, label2, label1, (yyvsp[0].attrs).code, label2);
     (yyval.attrs).code = temp;
 }
-#line 1276 "threeadd.tab.c"
+#line 1308 "y.tab.c"
     break;
 
   case 8: /* stmt: LBRACE stmt_list RBRACE  */
-#line 100 "threeadd.y"
+#line 100 "three_address.y"
                           {
     (yyval.attrs).code = (yyvsp[-1].attrs).code;
 }
-#line 1284 "threeadd.tab.c"
+#line 1316 "y.tab.c"
     break;
 
   case 9: /* bool_expr: expr EQ expr  */
-#line 105 "threeadd.y"
+#line 105 "three_address.y"
                         {
     char* temp = new_temp();
     int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
@@ -1294,11 +1326,11 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1298 "threeadd.tab.c"
+#line 1330 "y.tab.c"
     break;
 
   case 10: /* bool_expr: expr NE expr  */
-#line 114 "threeadd.y"
+#line 114 "three_address.y"
                {
     char* temp = new_temp();
     int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
@@ -1308,11 +1340,11 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1312 "threeadd.tab.c"
+#line 1344 "y.tab.c"
     break;
 
   case 11: /* bool_expr: expr LT expr  */
-#line 123 "threeadd.y"
+#line 123 "three_address.y"
                {
     char* temp = new_temp();
     int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
@@ -1322,11 +1354,11 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1326 "threeadd.tab.c"
+#line 1358 "y.tab.c"
     break;
 
   case 12: /* expr: NUMBER  */
-#line 134 "threeadd.y"
+#line 134 "three_address.y"
              {
     char* temp = new_temp();
     char* code = (char*)malloc(30);
@@ -1334,20 +1366,20 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1338 "threeadd.tab.c"
+#line 1370 "y.tab.c"
     break;
 
   case 13: /* expr: IDENTIFIER  */
-#line 141 "threeadd.y"
+#line 141 "three_address.y"
              {
     (yyval.attrs).addr = strdup((yyvsp[0].string));
     (yyval.attrs).code = NULL;
 }
-#line 1347 "threeadd.tab.c"
+#line 1379 "y.tab.c"
     break;
 
   case 14: /* expr: expr PLUS expr  */
-#line 145 "threeadd.y"
+#line 145 "three_address.y"
                  {
     char* temp = new_temp();
     int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
@@ -1357,11 +1389,11 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1361 "threeadd.tab.c"
+#line 1393 "y.tab.c"
     break;
 
   case 15: /* expr: expr MINUS expr  */
-#line 154 "threeadd.y"
+#line 154 "three_address.y"
                   {
     char* temp = new_temp();
     int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
@@ -1371,11 +1403,11 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1375 "threeadd.tab.c"
+#line 1407 "y.tab.c"
     break;
 
   case 16: /* expr: expr MULTIPLY expr  */
-#line 163 "threeadd.y"
+#line 163 "three_address.y"
                      {
     char* temp = new_temp();
     int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
@@ -1385,11 +1417,11 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1389 "threeadd.tab.c"
+#line 1421 "y.tab.c"
     break;
 
   case 17: /* expr: expr DIVIDE expr  */
-#line 172 "threeadd.y"
+#line 172 "three_address.y"
                    {
     char* temp = new_temp();
     int len = ((yyvsp[-2].attrs).code ? strlen((yyvsp[-2].attrs).code) : 0) + ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 100;
@@ -1399,20 +1431,20 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1403 "threeadd.tab.c"
+#line 1435 "y.tab.c"
     break;
 
   case 18: /* expr: LPAREN expr RPAREN  */
-#line 181 "threeadd.y"
+#line 181 "three_address.y"
                      {
     (yyval.attrs).addr = (yyvsp[-1].attrs).addr;
     (yyval.attrs).code = (yyvsp[-1].attrs).code;
 }
-#line 1412 "threeadd.tab.c"
+#line 1444 "y.tab.c"
     break;
 
   case 19: /* expr: MINUS expr  */
-#line 185 "threeadd.y"
+#line 185 "three_address.y"
                           {
     char* temp = new_temp();
     int len = ((yyvsp[0].attrs).code ? strlen((yyvsp[0].attrs).code) : 0) + 50;
@@ -1421,11 +1453,11 @@ yyreduce:
     (yyval.attrs).addr = temp;
     (yyval.attrs).code = code;
 }
-#line 1425 "threeadd.tab.c"
+#line 1457 "y.tab.c"
     break;
 
 
-#line 1429 "threeadd.tab.c"
+#line 1461 "y.tab.c"
 
       default: break;
     }
@@ -1618,7 +1650,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 195 "threeadd.y"
+#line 195 "three_address.y"
 
 
 void yyerror(const char* s) {
