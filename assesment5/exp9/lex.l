@@ -1,18 +1,32 @@
 %{
-#include "y.tab.h" // Include the generated header file from YACC
+#include "y.tab.h"
 #include <stdlib.h>
-#include <string.h>
 %}
 
+digit    [0-9]+
+id       [a-zA-Z_][a-zA-Z0-9_]*
+
 %%
-[ \t\n]+             ;             // Ignore whitespace
-[0-9]+               { yylval.num = atoi(yytext); return NUM; }
-[a-zA-Z][a-zA-Z0-9]* { yylval.id = strdup(yytext); return ID; }
-"+"                  return '+';
-"-"                  return '-';
-"*"                  return '*';
-"/"                  return '/';
-"="                  return '=';
-";"                  return ';';
+
+{digit}  { 
+    yylval.num = atoi(yytext); 
+    return NUMBER; 
+}
+
+{id}  { 
+    strncpy(yylval.id, yytext, sizeof(yylval.id) - 1); 
+    yylval.id[sizeof(yylval.id) - 1] = '\0'; 
+    return ID; 
+}
+
+"+"    { return PLUS; }
+"-"    { return MINUS; }
+"*"    { return MUL; }
+"/"    { return DIV; }
+"="    { return ASSIGN; }
+";"    { return SEMI; }
+
+[ \t\n]+  { /* ignore whitespace */ }
+.         { /* ignore other characters */ }
 
 %%
