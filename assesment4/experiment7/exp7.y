@@ -56,7 +56,7 @@ void yyerror(const char *s) {
 }
 
 void print_result(int result) {
-    printf("Result of expression: %d\n", result);
+    printf("%d\n", result);
 }
 
 int main(void) {
